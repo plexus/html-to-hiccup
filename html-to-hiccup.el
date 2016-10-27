@@ -42,7 +42,7 @@
 ;; This package does not contain any keybindings, bind it to whatever you see
 ;; fit.
 
-;; Goes well with `cider-format-edn-region`, or with fresh lemonade.
+;; Goes well with `cider-format-edn-region', or with fresh lemonade.
 
 ;;; Code:
 
