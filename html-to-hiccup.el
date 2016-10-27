@@ -47,6 +47,8 @@
 ;;; Code:
 
 (require 's)
+(require 'dash)
+
 (defun html-to-hiccup/sexp-to-hiccup-tag (elem)
   "Generate Hiccup for a HTML element tag + id/class shorthands."
   (let ((attrs (cadr elem)))
