@@ -47,6 +47,7 @@
 ;;; Code:
 
 (defun html-to-hiccup/sexp-to-hiccup-tag (elem)
+  "Generate Hiccup for a HTML element tag + id/class shorthands."
   (let ((attrs (cadr elem)))
     (concat ":" (symbol-name (car elem))
             (when-let ((id (cdr (assoc 'id attrs))))
@@ -55,6 +56,7 @@
               (concat "." (s-replace " " "." (s-trim class)))))))
 
 (defun html-to-hiccup/sexp-to-hiccup-attrs (attrs)
+  "Generate a Hiccup attributes map."
   (if-let ((attrs (--map (concat ":" (symbol-name (car it))
                                  " " (format "%S" (cdr it)))
                          (assq-delete-all 'class
@@ -62,6 +64,7 @@
       (concat " {" (s-join " " attrs) "}")))
 
 (defun html-to-hiccup/sexp-to-hiccup-children (cs)
+  "Recursively render Hiccup children, skipping empty (whitespace) strings."
   (s-join "" (--map (if (stringp it)
                         (when (string-match "[^\s\n]" it) ; contains non-whitespace
                           (format " %S" it))
@@ -69,6 +72,7 @@
                     cs)))
 
 (defun html-to-hiccup/sexp-to-hiccup (html-sexp)
+  "Turn a `html-sexp' (as returned by libxml-parse-*) into a Hiccup element."
   (concat "["
           (html-to-hiccup/sexp-to-hiccup-tag html-sexp)
           (html-to-hiccup/sexp-to-hiccup-attrs (cadr html-sexp))
@@ -76,6 +80,7 @@
           "]"))
 
 (defun html-to-hiccup-convert-region ()
+  "Convert the current region from HTML to Hiccup."
   (interactive)
   (let ((html-sexp (caddr (caddr (libxml-parse-html-region (point) (mark))))))
     (delete-region (point) (mark))
