@@ -1,0 +1,77 @@
+#+TITLE: html-to-hiccup
+
+Emacs package that turns HTML into Hiccup syntax, a notation popular when doing
+Clojure/ClojureScript web development.
+
+* Installation
+
+** use-package (recommended)
+
+If you're using [[https://github.com/jwiegley/use-package][use-package]] then just drop this snippet in your
+~.emacs.d/init.el~. Change the keybinding to something more practical.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package html-to-hiccup
+    :ensure t
+    :config
+    (define-key clojure-mode-map (kbd "H-h") 'html-to-hiccup-convert-region))
+#+END_SRC
+
+** MELPA
+
+#+BEGIN_SRC emacs-lisp
+  (package-initialize)           ;; you probably don't need to initialize + refresh
+  (package-refresh-contents)     ;; but it won't hurt
+  (package-install 'html-to-hiccup)
+#+END_SRC
+
+** From Github
+
+#+BEGIN_SRC shell
+git clone https://github.com/plexus/html-to-hiccup.git
+cd html-to-hiccup
+cp html-to-hiccup.el ~/.emacs.d
+#+END_SRC
+
+* Usage
+
+Require ~html-to-hiccup~, select a snippet of HTML, and do ~M-x
+html-to-hiccup-convert-region~. This package does not come with a default
+keybinding, you're free to bind it to whatever key combo you like.
+
+#+BEGIN_SRC emacs-lisp
+(require 'html-to-hiccup)
+
+(define-key clojure-mode-map (kbd "H-h") 'html-to-hiccup-convert-region)
+#+END_SRC
+
+If you're using CIDER, a cool thing to do is to call `cider-format-edn-region`
+on the region after conversion.
+
+* Example
+
+Turns this
+
+#+BEGIN_SRC html
+  <div id="thing">
+    <span class="important">Enjoy your lemonade</span>
+  </div>
+#+END_SRC
+
+into this
+
+#+BEGIN_SRC clojure
+  [:div#thing [:span.important "Enjoy your lemonade"]]
+#+END_SRC
+
+* Attribution
+
+I had an earlier, hacky version of this code lying around before. Jack Rusher
+was so kind to clean it up and give me feedback during EuroClojure 2016. Thanks,
+Jack! It seemed a waste not to put it on MELPA after that.
+
+* License
+
+Mozilla Public License 2.0
+
+© 2016 Arne Brasseur, Jack Rusher
