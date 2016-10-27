@@ -86,7 +86,7 @@
 (defun html-to-hiccup-convert-region ()
   "Convert the current region from HTML to Hiccup."
   (interactive)
-  (let ((html-sexp (caddr (caddr (libxml-parse-html-region (point) (mark))))))
+  (let ((html-sexp (libxml-parse-html-region (point) (mark))))
     (delete-region (point) (mark))
     (insert (html-to-hiccup/sexp-to-hiccup html-sexp))))
 
