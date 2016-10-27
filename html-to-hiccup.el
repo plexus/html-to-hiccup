@@ -7,6 +7,7 @@
 ;; Version: 1.0
 ;; Created: 27 October 2016
 ;; Keywords: HTML Hiccup Clojure
+;; Package-Requires: ((dash "2.13.0") (s "1.10.0"))
 
 ;; This file is NOT part of GNU Emacs.
 
