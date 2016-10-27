@@ -83,12 +83,15 @@
           (html-to-hiccup-sexp-to-hiccup-children (cddr html-sexp))
           "]"))
 
-(defun html-to-hiccup-convert-region ()
-  "Convert the current region from HTML to Hiccup."
-  (interactive)
-  (let ((html-sexp (libxml-parse-html-region (point) (mark))))
-    (delete-region (point) (mark))
-    (insert (html-to-hiccup-sexp-to-hiccup html-sexp))))
+(defun html-to-hiccup-convert-region (start end)
+  "Convert the region between START and END from HTML to Hiccup."
+  (interactive "r")
+  (save-excursion
+    (save-restriction
+      (narrow-to-region start end)
+      (let ((html-sexp (libxml-parse-html-region (point-min) (point-max))))
+	(delete-region (point-min) (point-max))
+	(insert (html-to-hiccup-sexp-to-hiccup html-sexp))))))
 
 (provide 'html-to-hiccup)
 
