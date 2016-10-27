@@ -50,7 +50,7 @@
 (require 's)
 (require 'dash)
 
-(defun html-to-hiccup/sexp-to-hiccup-tag (elem)
+(defun html-to-hiccup-sexp-to-hiccup-tag (elem)
   "Generate Hiccup for a HTML element tag + id/class shorthands."
   (let ((attrs (cadr elem)))
     (concat ":" (symbol-name (car elem))
@@ -59,7 +59,7 @@
             (when-let ((class (cdr (assoc 'class attrs))))
               (concat "." (s-replace " " "." (s-trim class)))))))
 
-(defun html-to-hiccup/sexp-to-hiccup-attrs (attrs)
+(defun html-to-hiccup-sexp-to-hiccup-attrs (attrs)
   "Generate a Hiccup attributes map."
   (if-let ((attrs (--map (concat ":" (symbol-name (car it))
                                  " " (format "%S" (cdr it)))
@@ -67,20 +67,20 @@
                           (assq-delete-all 'id attrs)))))
       (concat " {" (s-join " " attrs) "}")))
 
-(defun html-to-hiccup/sexp-to-hiccup-children (cs)
+(defun html-to-hiccup-sexp-to-hiccup-children (cs)
   "Recursively render Hiccup children, skipping empty (whitespace) strings."
   (s-join "" (--map (if (stringp it)
                         (when (string-match "[^\s\n]" it) ; contains non-whitespace
                           (format " %S" it))
-                      (concat " " (html-to-hiccup/sexp-to-hiccup it)))
+                      (concat " " (html-to-hiccup-sexp-to-hiccup it)))
                     cs)))
 
-(defun html-to-hiccup/sexp-to-hiccup (html-sexp)
-  "Turn a `html-sexp' (as returned by libxml-parse-*) into a Hiccup element."
+(defun html-to-hiccup-sexp-to-hiccup (html-sexp)
+  "Turn a html-sexp (as returned by libxml-parse-*) into a Hiccup element."
   (concat "["
-          (html-to-hiccup/sexp-to-hiccup-tag html-sexp)
-          (html-to-hiccup/sexp-to-hiccup-attrs (cadr html-sexp))
-          (html-to-hiccup/sexp-to-hiccup-children (cddr html-sexp))
+          (html-to-hiccup-sexp-to-hiccup-tag html-sexp)
+          (html-to-hiccup-sexp-to-hiccup-attrs (cadr html-sexp))
+          (html-to-hiccup-sexp-to-hiccup-children (cddr html-sexp))
           "]"))
 
 (defun html-to-hiccup-convert-region ()
@@ -88,7 +88,7 @@
   (interactive)
   (let ((html-sexp (libxml-parse-html-region (point) (mark))))
     (delete-region (point) (mark))
-    (insert (html-to-hiccup/sexp-to-hiccup html-sexp))))
+    (insert (html-to-hiccup-sexp-to-hiccup html-sexp))))
 
 (provide 'html-to-hiccup)
 
