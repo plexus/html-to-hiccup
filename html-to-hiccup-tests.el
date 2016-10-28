@@ -12,18 +12,45 @@
       (execute-kbd-macro (kbd keys)))
     (buffer-substring start end)))
 
-(defconst html-content "<html>
-                          <body>
-                            <h1>Yes</h1>
-                            <p>foo</p>
-                          </body>
-                        </html>")
 
-(ert-deftest html-to-hiccup-convert-region-test ()
+(defun html-to-hiccup-test-case (html hiccup)
+  (should (string= hiccup
+                   (set-up-buffer html
+                                  "C-SPC M-> M-x html-to-hiccup-convert-region"
+                                  1
+                                  (+ (length hiccup) 1)))))
+
+(ert-deftest html-to-hiccup-convert-region-basic-test ()
   "HTML to Hiccup conversion test"
-  (should (string= "[:html [:body [:h1 \"Yes\"] [:p \"foo\"]]]"
-                   (set-up-buffer html-content
-				  "C-SPC M-> M-x html-to-hiccup-convert-region"
-                                1
-                                39))))
+  (html-to-hiccup-test-case
+   "<html>
+      <body>
+        <h1>Yes</h1>
+        <p>foo</p>
+      </body>
+    </html>"
+   "[:html [:body [:h1 \"Yes\"] [:p \"foo\"]]]"))
+
+(ert-deftest html-to-hiccup-convert-region-class-id-test ()
+  "HTML to Hiccup conversion test"
+  (html-to-hiccup-test-case
+   "<html>
+      <body id=\"foo\">
+        <h1 class=\"header big\">Yes</h1>
+        <p>foo</p>
+      </body>
+    </html>"
+   "[:html [:body#foo [:h1.header.big \"Yes\"] [:p \"foo\"]]]"))
+
+(ert-deftest html-to-hiccup-convert-region-attrs-test ()
+  "HTML to Hiccup conversion test"
+  (html-to-hiccup-test-case
+   "<html>
+      <body>
+        <h1 class=\"header big\" aria-label=\"Yes\">Yes</h1>
+        <p style=\"border: 1px solid black;\" foo=bar>foo</p>
+      </body>
+    </html>"
+   "[:html [:body [:h1.header.big {:aria-label \"Yes\"} \"Yes\"] [:p {:style \"border: 1px solid black;\" :foo \"bar\"} \"foo\"]]]"))
+
 (ert t)
