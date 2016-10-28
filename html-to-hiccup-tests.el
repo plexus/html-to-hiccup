@@ -18,7 +18,7 @@
                    (set-up-buffer html
                                   "C-SPC M-> M-x html-to-hiccup-convert-region"
                                   1
-                                  (+ (length hiccup) 1)))))
+                                  (1+ (length hiccup))))))
 
 (ert-deftest html-to-hiccup-convert-region-basic-test ()
   "HTML to Hiccup conversion test"
