@@ -62,8 +62,7 @@
 
 (defun html-to-hiccup--sexp-to-hiccup-attrs (attrs)
   "Generate a Hiccup attributes map."
-  (if-let ((attrs (--map (concat ":" (symbol-name (car it))
-                                 " " (format "%S" (cdr it)))
+  (if-let ((attrs (--map (format ":%s %S" (car it) (cdr it))
                          (assq-delete-all 'class
                           (assq-delete-all 'id attrs)))))
       (concat " {" (s-join " " attrs) "}")))
