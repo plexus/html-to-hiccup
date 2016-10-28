@@ -7,7 +7,7 @@
 ;; Version: 1.0
 ;; Created: 27 October 2016
 ;; Keywords: HTML Hiccup Clojure
-;; Package-Requires: ((emacs-25.1) (dash "2.13.0") (s "1.10.0"))
+;; Package-Requires: ((emacs "25.1") (dash "2.13.0") (s "1.10.0"))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -49,6 +49,7 @@
 
 (require 's)
 (require 'dash)
+(require 'subr-x)
 
 (defun html-to-hiccup-sexp-to-hiccup-tag (elem)
   "Generate Hiccup for a HTML element tag + id/class shorthands."
