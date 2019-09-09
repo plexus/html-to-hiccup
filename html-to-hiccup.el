@@ -84,13 +84,15 @@
           "]"))
 
 ;;;###autoload
-(defun html-to-hiccup-convert-region (start end)
+(defun html-to-hiccup-convert-region (start end &optional bodytags)
   "Convert the region between START and END from HTML to Hiccup."
   (interactive "r")
   (save-excursion
     (save-restriction
       (narrow-to-region start end)
-      (let ((html-sexp (libxml-parse-html-region (point-min) (point-max))))
+      (let ((html-sexp (if bodytags
+                           (nth 2  (nth 2 (libxml-parse-html-region (point-min) (point-max))))
+                           (libxml-parse-html-region (point-min) (point-max)))))
 	(delete-region (point-min) (point-max))
 	(insert (html-to-hiccup--sexp-to-hiccup html-sexp))))))
 
