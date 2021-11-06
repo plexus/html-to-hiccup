@@ -51,20 +51,25 @@
 (require 'dash)
 (require 'subr-x)
 
-(defun html-to-hiccup--sexp-to-hiccup-tag (elem)
-  "Generate Hiccup for a HTML element tag + id/class shorthands."
+(defun html-to-hiccup--sexp-to-hiccup-tag (elem tag-class?)
+  "Generate Hiccup for the HTML ELEM tag + id + (iff TAG-CLASS?)
+class shorthands."
   (let ((attrs (cadr elem)))
     (concat ":" (symbol-name (car elem))
             (when-let ((id (cdr (assoc 'id attrs))))
               (concat "#" id))
-            (when-let ((class (cdr (assoc 'class attrs))))
-              (concat "." (s-replace " " "." (s-trim class)))))))
+            (when tag-class?
+              (when-let ((class (cdr (assoc 'class attrs))))
+                (concat "." (s-replace " " "." (s-trim class))))))))
 
-(defun html-to-hiccup--sexp-to-hiccup-attrs (attrs)
-  "Generate a Hiccup attributes map."
+(defun html-to-hiccup--sexp-to-hiccup-attrs (attrs attrs-remove-class?)
+  "Generate a Hiccup ATTRS map with the class attribute removed
+when ATTRS-REMOVE-CLASS?."
   (if-let ((attrs (--map (format ":%s %S" (car it) (cdr it))
-                         (assq-delete-all 'class
-                          (assq-delete-all 'id attrs)))))
+                         (assq-delete-all 'id
+                           (if attrs-remove-class?
+                               (assq-delete-all 'class attrs)
+                             attrs)))))
       (concat " {" (s-join " " attrs) "}")))
 
 (defun html-to-hiccup--sexp-to-hiccup-children (cs)
@@ -77,11 +82,15 @@
 
 (defun html-to-hiccup--sexp-to-hiccup (html-sexp)
   "Turn a html-sexp (as returned by libxml-parse-*) into a Hiccup element."
-  (concat "["
-          (html-to-hiccup--sexp-to-hiccup-tag html-sexp)
-          (html-to-hiccup--sexp-to-hiccup-attrs (cadr html-sexp))
-          (html-to-hiccup--sexp-to-hiccup-children (cddr html-sexp))
-          "]"))
+  (let* ((attrs (cadr html-sexp))
+         (class (cdr (assoc 'class attrs)))
+         ;; not all class chars are valid for shorthand syntax
+         (tag-class-shorthand? (when class (not (s-contains? "/" class)))))
+    (concat "["
+            (html-to-hiccup--sexp-to-hiccup-tag html-sexp tag-class-shorthand?)
+            (html-to-hiccup--sexp-to-hiccup-attrs attrs tag-class-shorthand?)
+            (html-to-hiccup--sexp-to-hiccup-children (cddr html-sexp))
+            "]")))
 
 ;;;###autoload
 (defun html-to-hiccup-convert-region (start end &optional bodytags)

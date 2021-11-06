@@ -64,6 +64,16 @@ into this
   [:div#thing [:span.important "Enjoy your lemonade"]]
 #+END_SRC
 
+* Tests
+
+You can either run the tests interactively by loading the test file in
+Emacs with ~M-x load-file~ and then ~M-x ert RET t~ (see [[https://www.gnu.org/software/emacs/manual/html_node/ert/Running-Tests-Interactively.html][ERT - running
+tests interactively]]), or from the command line by invoking [[https://github.com/doublep/eldev][Eldev]] as
+
+#+begin_src shell
+  eldev test
+#+end_src
+
 * Attribution
 
 I had an earlier, hacky version of this code lying around before. Jack Rusher
