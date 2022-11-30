@@ -6,7 +6,7 @@
 ;; URL: https://github.com/plexus/html-to-hiccup
 ;; Version: 1.0
 ;; Created: 27 October 2016
-;; Keywords: HTML Hiccup Clojure
+;; Keywords: HTML Hiccup Clojure convenience tools
 ;; Package-Requires: ((emacs "25.1") (dash "2.13.0") (s "1.10.0"))
 
 ;; This file is NOT part of GNU Emacs.
@@ -73,8 +73,8 @@ class shorthands."
                 (concat "." (s-replace " " "." (s-trim class))))))))
 
 (defun html-to-hiccup--sexp-to-hiccup-attrs (attrs attrs-remove-class?)
-  "Generate a Hiccup ATTRS map with the class attribute removed
-when ATTRS-REMOVE-CLASS?."
+  "Generate a Hiccup ATTRS map.
+The class attribute is removed when ATTRS-REMOVE-CLASS? is non-nil."
   (if-let ((attrs (--map (format ":%s %S" (car it) (cdr it))
                          (assq-delete-all 'id
                            (if attrs-remove-class?
@@ -83,7 +83,7 @@ when ATTRS-REMOVE-CLASS?."
       (concat " {" (s-join " " attrs) "}")))
 
 (defun html-to-hiccup--sexp-to-hiccup-children (cs)
-  "Recursively render Hiccup children, skipping empty (whitespace) strings."
+  "Recursively render Hiccup children CS, skipping empty (whitespace) strings."
   (s-join "" (--map (if (stringp it)
                         (when (string-match "[^\s\n]" it) ; contains non-whitespace
                           (format " %S" it))
@@ -91,7 +91,7 @@ when ATTRS-REMOVE-CLASS?."
                     cs)))
 
 (defun html-to-hiccup--sexp-to-hiccup (html-sexp)
-  "Turn a html-sexp (as returned by libxml-parse-*) into a Hiccup element."
+  "Turn a HTML-SEXP (as returned by libxml-parse-*) into a Hiccup element."
   (let* ((attrs (cadr html-sexp))
          (class (cdr (assoc 'class attrs)))
          (tag-class-shorthand? (and html-to-hiccup-use-shorthand-p
@@ -105,16 +105,17 @@ when ATTRS-REMOVE-CLASS?."
 
 ;;;###autoload
 (defun html-to-hiccup-convert-region (start end &optional bodytags)
-  "Convert the region between START and END from HTML to Hiccup."
+  "Convert the region between START and END from HTML to Hiccup.
+If BODYTAGS is non-nil, skip the first element returned from the HTML parser."
   (interactive "r")
   (save-excursion
     (save-restriction
       (narrow-to-region start end)
       (let ((html-sexp (if bodytags
                            (nth 2  (nth 2 (libxml-parse-html-region (point-min) (point-max))))
-                           (libxml-parse-html-region (point-min) (point-max)))))
-	(delete-region (point-min) (point-max))
-	(insert (html-to-hiccup--sexp-to-hiccup html-sexp))))))
+                         (libxml-parse-html-region (point-min) (point-max)))))
+        (delete-region (point-min) (point-max))
+        (insert (html-to-hiccup--sexp-to-hiccup html-sexp))))))
 
 (provide 'html-to-hiccup)
 
