@@ -117,6 +117,37 @@ If BODYTAGS is non-nil, skip the first element returned from the HTML parser."
         (delete-region (point-min) (point-max))
         (insert (html-to-hiccup--sexp-to-hiccup html-sexp))))))
 
+;;;###autoload
+(defun html-to-hiccup-yank (&optional arg)
+  "Like `yank' but insert killed HTML as Hiccup.
+ARGs are the same as in the `yank' command.
+
+Code is copied from the `yank' function in simple.el."
+  (interactive "*P")
+  (setq yank-window-start (window-start))
+  ;; If we don't get all the way thru, make last-command indicate that
+  ;; for the following command.
+  (setq this-command t)
+  (push-mark) (current-kill 0)
+  (let ((html-sexp (with-temp-buffer
+                     (insert (current-kill (cond
+                                            ((listp arg) 0)
+                                            ((eq arg '-) -2)
+                                            (t (1- arg)))))
+                     (libxml-parse-html-region (point-min) (point-max)))))
+    (insert (html-to-hiccup--sexp-to-hiccup html-sexp)))
+
+  (if (consp arg)
+      ;; This is like exchange-point-and-mark, but doesn't activate the mark.
+      ;; It is cleaner to avoid activation, even though the command
+      ;; loop would deactivate the mark because we inserted text.
+      (goto-char (prog1 (mark t)
+                   (set-marker (mark-marker) (point) (current-buffer)))))
+  ;; If we do get all the way thru, make this-command indicate that.
+  (if (eq this-command t)
+      (setq this-command 'yank))
+  nil)
+
 (provide 'html-to-hiccup)
 
 ;;; html-to-hiccup.el ends here
