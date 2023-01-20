@@ -11,10 +11,12 @@ If you're using [[https://github.com/jwiegley/use-package][use-package]] then ju
 ~.emacs.d/init.el~. Change the keybinding to something more practical.
 
 #+BEGIN_SRC emacs-lisp
-  (use-package html-to-hiccup
-    :ensure t
-    :config
-    (define-key clojure-mode-map (kbd "H-h") 'html-to-hiccup-convert-region))
+(use-package html-to-hiccup
+  :bind (:map clojure-mode-map
+         ("H-h" . html-to-hiccup-convert-region)
+         ("H-y" . html-to-hiccup-yank))
+  :config
+  (setq html-to-hiccup-use-shorthand-p t))
 #+END_SRC
 
 ** MELPA
@@ -36,13 +38,18 @@ cp html-to-hiccup.el ~/.emacs.d
 * Usage
 
 Require ~html-to-hiccup~, select a snippet of HTML, and do ~M-x
-html-to-hiccup-convert-region~. This package does not come with a default
-keybinding, you're free to bind it to whatever key combo you like.
+html-to-hiccup-convert-region~ to replace the selected HTML with Hiccup.
+If you have a HTML snippet in your kill ring (e.g. copied from a website)
+you can paste it as Hiccup with ~M-x html-to-hiccup-yank~.
+
+This package does not come with a default keybinding, you're free to
+bind it to whatever key combo you like.
 
 #+BEGIN_SRC emacs-lisp
 (require 'html-to-hiccup)
 
-(define-key clojure-mode-map (kbd "H-h") 'html-to-hiccup-convert-region)
+(define-key clojure-mode-map (kbd "H-h") #'html-to-hiccup-convert-region)
+(define-key clojure-mode-map (kbd "H-y") #'html-to-hiccup-yank)
 #+END_SRC
 
 If you're using CIDER, a cool thing to do is to call `cider-format-edn-region`

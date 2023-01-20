@@ -68,11 +68,26 @@
 (ert-deftest html-to-hiccup-convert-no-shorthand-test ()
   "HTML to Hiccup conversion test"
   (let ((html-to-hiccup-use-shorthand-p nil))
-      (html-to-hiccup-test-case
-       "<html>
-         <body>
-           <h1 class=\"header big\" aria-label=\"Yes\">Yes</h1>
-           <p style=\"border: 1px solid black;\" foo=bar>foo</p>
-         </body>
-       </html>"
-       "[:html [:body [:h1 {:class \"header big\" :aria-label \"Yes\"} \"Yes\"] [:p {:style \"border: 1px solid black;\" :foo \"bar\"} \"foo\"]]]")))
+    (html-to-hiccup-test-case
+     "<html>
+        <body>
+          <h1 class=\"header big\" aria-label=\"Yes\">Yes</h1>
+          <p style=\"border: 1px solid black;\" foo=bar>foo</p>
+        </body>
+      </html>"
+     "[:html [:body [:h1 {:class \"header big\" :aria-label \"Yes\"} \"Yes\"] [:p {:style \"border: 1px solid black;\" :foo \"bar\"} \"foo\"]]]")))
+
+(ert-deftest html-to-hiccup-yank-test ()
+  "HTML to Hiccup conversion test"
+  (let ((expected "[:html [:body [:h1.header.big {:aria-label \"Yes\"} \"Yes\"] [:p {:style \"border: 1px solid black;\" :foo \"bar\"} \"foo\"]]]")
+        (actual (with-temp-buffer
+                  (kill-new
+                   "<html>
+                      <body>
+                        <h1 class=\"header big\" aria-label=\"Yes\">Yes</h1>
+                        <p style=\"border: 1px solid black;\" foo=bar>foo</p>
+                      </body>
+                    </html>")
+                  (html-to-hiccup-yank)
+                  (buffer-substring (point-min) (point-max)))))
+    (should (string= actual expected))))
