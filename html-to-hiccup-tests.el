@@ -13,13 +13,13 @@
       (execute-kbd-macro (kbd keys)))
     (buffer-substring start (min end (point-max)))))
 
-
 (defun html-to-hiccup-test-case (html hiccup)
   (should (string= hiccup
                    (set-up-buffer html
                                   "C-SPC M-> M-x html-to-hiccup-convert-region"
                                   1
                                   (1+ (length hiccup))))))
+
 
 (ert-deftest html-to-hiccup-convert-region-basic-test ()
   "HTML to Hiccup conversion test"
@@ -91,3 +91,9 @@
                   (html-to-hiccup-yank)
                   (buffer-substring (point-min) (point-max)))))
     (should (string= actual expected))))
+
+(ert-deftest html-to-hiccup-convert-case-sensitive-tags-attrs ()
+  "Deal with case sensitive tags and attributes in SVGs"
+  (html-to-hiccup-test-case
+   "<svg viewBox='0 0 24'><linearGradient/></svg>"
+   "[:svg {:viewBox \"0 0 24\"} [:linearGradient]]"))

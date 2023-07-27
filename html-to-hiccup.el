@@ -7,7 +7,7 @@
 ;; Version: 1.0
 ;; Created: 27 October 2016
 ;; Keywords: HTML Hiccup Clojure convenience tools
-;; Package-Requires: ((emacs "25.1") (dash "2.13.0") (s "1.10.0"))
+;; Package-Requires: ((emacs "25.1") (s "1.10.0"))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -48,7 +48,7 @@
 ;;; Code:
 
 (require 's)
-(require 'dash)
+(require 'seq)
 (require 'subr-x)
 
 (defgroup html-to-hiccup nil
@@ -61,11 +61,48 @@
   :type 'boolean
   :safe #'booleanp)
 
+(setq html-to-hiccup--case-sensitive-attrs
+      (mapcar
+       (lambda (tag)
+         (cons (downcase tag) tag))
+       '("externalResourcesRequired" "focusHighlight" "requiredExtensions" "requiredFeatures" "requiredFonts"
+         "requiredFormats" "systemLanguage" "glyphRef" "attributeName" "attributeType"
+         "calcMode" "keySplines" "keyTimes" "repeatCount" "repeatDur"
+         "keyPoints" "initialVisibility" "preserveAspectRatio" "syncBehavior" "syncMaster"
+         "syncTolerance" "pathLength" "clipPathUnits" "edgeMode" "kernelMatrix"
+         "kernelUnitLength" "preserveAlpha" "targetX" "targetY" "diffuseConstant"
+         "surfaceScale" "xChannelSelector" "yChannelSelector" "stdDeviation" "tableValues"
+         "specularConstant" "specularExponent" "limitingConeAngle" "pointsAtX" "pointsAtY"
+         "pointsAtZ" "baseFrequency" "numOctaves" "stitchTiles" "filterRes"
+         "filterUnits" "primitiveUnits" "gradientTransform" "gradientUnits" "spreadMethod"
+         "defaultAction" "markerHeight" "markerUnits" "markerWidth" "refX"
+         "refY" "viewBox" "maskContentUnits" "maskUnits" "patternContentUnits"
+         "patternTransform" "patternUnits" "mediaCharacterEncoding" "mediaContentEncodings" "mediaSize"
+         "mediaTime" "baseProfile" "contentScriptType" "contentStyleType" "playbackOrder"
+         "snapshotTime" "syncBehaviorDefault" "syncToleranceDefault" "timelineBegin" "zoomAndPan"
+         "lengthAdjust" "textLength" "startOffset" "transformBehavior" "viewTarget")))
+
+(setq html-to-hiccup--case-sensitive-tags
+      (mapcar
+       (lambda (tag)
+         (cons (downcase tag) tag))
+       '("altGlyph" "altGlyphDef" "altGlyphItem" "animateColor" "animateMotion"
+         "animateTransform" "clipPath" "feBlend" "feColorMatrix" "feComponentTransfer"
+         "feComposite" "feConvolveMatrix" "feDiffuseLighting" "feDisplacementMap" "feDistantLight"
+         "feDropShadow" "feFlood" "feFuncA" "feFuncB" "feFuncG"
+         "feFuncR" "feGaussianBlur" "feImage" "feMerge" "feMergeNode"
+         "feMorphology" "feOffset" "fePointLight" "feSpecularLighting" "feSpotLight"
+         "feTile" "feTurbulence" "foreignObject" "glyphRef" "linearGradient"
+         "radialGradient" "solidColor" "textArea" "textPath")))
+
 (defun html-to-hiccup--sexp-to-hiccup-tag (elem tag-class?)
   "Generate Hiccup for the HTML ELEM tag + id + (if TAG-CLASS?)
 class shorthands."
-  (let ((attrs (cadr elem)))
-    (concat ":" (symbol-name (car elem))
+  (let* ((attrs (cadr elem))
+         (tag (symbol-name (car elem)))
+         (cased-tag (cdr
+                     (assoc tag html-to-hiccup--case-sensitive-tags))))
+    (concat ":" (or cased-tag tag)
             (when-let ((id (cdr (assoc 'id attrs))))
               (concat "#" id))
             (when tag-class?
@@ -75,20 +112,26 @@ class shorthands."
 (defun html-to-hiccup--sexp-to-hiccup-attrs (attrs attrs-remove-class?)
   "Generate a Hiccup ATTRS map.
 The class attribute is removed when ATTRS-REMOVE-CLASS? is non-nil."
-  (if-let ((attrs (--map (format ":%s %S" (car it) (cdr it))
-                         (assq-delete-all 'id
-                           (if attrs-remove-class?
-                               (assq-delete-all 'class attrs)
-                             attrs)))))
+  (if-let ((attrs (mapcar
+                   (lambda (it)
+                     (let* ((attr (symbol-name (car it)))
+                            (cased-attr (cdr
+                                         (assoc attr html-to-hiccup--case-sensitive-attrs))))
+                       (format ":%s %S" (or cased-attr attr) (cdr it))))
+                   (assq-delete-all 'id
+                                    (if attrs-remove-class?
+                                        (assq-delete-all 'class attrs)
+                                      attrs)))))
       (concat " {" (s-join " " attrs) "}")))
 
 (defun html-to-hiccup--sexp-to-hiccup-children (cs)
   "Recursively render Hiccup children CS, skipping empty (whitespace) strings."
-  (s-join "" (--map (if (stringp it)
-                        (when (string-match "[^\s\n]" it) ; contains non-whitespace
-                          (format " %S" it))
-                      (concat " " (html-to-hiccup--sexp-to-hiccup it)))
-                    cs)))
+  (s-join "" (mapcar (lambda (it)
+                       (if (stringp it)
+                           (when (string-match "[^\s\n]" it) ; contains non-whitespace
+                             (format " %S" it))
+                         (concat " " (html-to-hiccup--sexp-to-hiccup it))))
+                     cs)))
 
 (defun html-to-hiccup--sexp-to-hiccup (html-sexp)
   "Turn a HTML-SEXP (as returned by libxml-parse-*) into a Hiccup element."
@@ -108,14 +151,18 @@ The class attribute is removed when ATTRS-REMOVE-CLASS? is non-nil."
   "Convert the region between START and END from HTML to Hiccup.
 If BODYTAGS is non-nil, skip the first element returned from the HTML parser."
   (interactive "r")
-  (save-excursion
-    (save-restriction
+  (save-restriction
+    (let* ((html-str (buffer-substring start end))
+           (bodytags (or bodytags
+                         (not
+                          (string-match-p "<html.*\\(\n.*\\)*<body" html-str)))))
       (narrow-to-region start end)
       (let ((html-sexp (if bodytags
-                           (nth 2  (nth 2 (libxml-parse-html-region (point-min) (point-max))))
+                           (nth 2 (nth 2 (libxml-parse-html-region (point-min) (point-max))))
                          (libxml-parse-html-region (point-min) (point-max)))))
         (delete-region (point-min) (point-max))
-        (insert (html-to-hiccup--sexp-to-hiccup html-sexp))))))
+        (when (not (stringp html-sexp))
+          (insert (html-to-hiccup--sexp-to-hiccup html-sexp)))))))
 
 ;;;###autoload
 (defun html-to-hiccup-yank (&optional arg)
@@ -129,13 +176,12 @@ Code is copied from the `yank' function in simple.el."
   ;; for the following command.
   (setq this-command t)
   (push-mark) (current-kill 0)
-  (let ((html-sexp (with-temp-buffer
-                     (insert (current-kill (cond
-                                            ((listp arg) 0)
-                                            ((eq arg '-) -2)
-                                            (t (1- arg)))))
-                     (libxml-parse-html-region (point-min) (point-max)))))
-    (insert (html-to-hiccup--sexp-to-hiccup html-sexp)))
+  (let ((start (point)))
+    (insert (current-kill (cond
+                           ((listp arg) 0)
+                           ((eq arg '-) -2)
+                           (t (1- arg)))))
+    (html-to-hiccup-convert-region start (point)))
 
   (if (consp arg)
       ;; This is like exchange-point-and-mark, but doesn't activate the mark.
